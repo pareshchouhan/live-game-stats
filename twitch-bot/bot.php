@@ -120,6 +120,21 @@ do {
                 $last_update_time = time();
                 $prev_count['first_user'] = $first_user_count;
                 $prev_count['second_user'] = $second_user_count;
+
+                $query = "SELECT * FROM matches WHERE active=1";
+                $result = $mysqli->query($query);
+                if (!$result) {
+                    echo "mysqli error: " . $mysqli->error . "\n";
+                    break;
+                }
+                if($result->num_rows > 0) {
+                    $row = $result->fetch_object();
+                    echo "Current Row ID : ". $id. " New Row ID : ".$row->id;
+                    if($id != $row->id) {
+                        fclose($fp);
+                        break;
+                    }
+                }
             }
         }
     }
