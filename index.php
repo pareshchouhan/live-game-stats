@@ -30,26 +30,26 @@ require_once 'config.php';
 					$mysqli = new mysqli($host, $user, $password, $dbname);
 
 					// check if the row exists in db
-					$query = "SELECT * FROM matches WHERE date=CURDATE() AND first_user='" . $first_user . "' AND second_user='" . $second_user . "'";
+					// $query = "SELECT * FROM matches WHERE date=CURDATE() AND first_user='" . $first_user . "' AND second_user='" . $second_user . "'";
 
-					$result = $mysqli->query($query);
+					// $result = $mysqli->query($query);
 					
-					// if row doesn't exist, insert new row
-					if ($result->num_rows < 1) {
+					// // if row doesn't exist, insert new row
+					// if ($result->num_rows < 1) {
 						// set other rows to be inactive
-						$inactiveQuery = "UPDATE `matches` SET `active`=0 WHERE `active`=1";
-						$res = $mysqli->query($inactiveQuery);
-						if (!$res) {
-							echo "mysqli error: " . $mysqli->error . "\n";
-						}
-
-						// insert new row
-						$users_voted = array();
-						$serialized = serialize($users_voted);
-						$query = "INSERT INTO `matches`(`date`, `first_user`, `second_user`, `first_user_count`, `second_user_count`, `created_at`, `from_date`, `to_date`, `public_id`, `active`, `users_voted`) VALUES (CURDATE(),'$first_user', '$second_user', $first_user_count, $second_user_count, UTC_TIMESTAMP() + 0, CURDATE(), CURDATE() + 1, '$public_id', 1, '$serialized')";
-
-						$mysqli->query($query);
+					$inactiveQuery = "UPDATE `matches` SET `active`=0 WHERE `active`=1";
+					$res = $mysqli->query($inactiveQuery);
+					if (!$res) {
+						echo "mysqli error: " . $mysqli->error . "\n";
 					}
+
+					// insert new row
+					$users_voted = array();
+					$serialized = serialize($users_voted);
+					$query = "INSERT INTO `matches`(`date`, `first_user`, `second_user`, `first_user_count`, `second_user_count`, `created_at`, `from_date`, `to_date`, `public_id`, `active`, `users_voted`) VALUES (CURDATE(),'$first_user', '$second_user', $first_user_count, $second_user_count, UTC_TIMESTAMP() + 0, CURDATE(), CURDATE() + 1, '$public_id', 1, '$serialized')";
+
+					$mysqli->query($query);
+					// }
 				} catch (Exception $e) {
 					echo "mysqli exception: ", $e->getMessage(), "\n";
 				}
