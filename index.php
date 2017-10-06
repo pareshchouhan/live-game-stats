@@ -38,21 +38,22 @@ require_once 'config.php';
 	</style>
 </head>
 <body>
-	<?php
-	if (!isset($_POST['first_user']) || !isset($_POST['second_user'])) {
-		?>
-		<div class="container">
-			<h1>Homepage</h1>
-			<form action="<?php echo $_SERVER['PHP_SELF']?>" method="post">
+	<div class="container">
+		<h1>Homepage</h1>
+		<form action="<?php echo $_SERVER['PHP_SELF']?>" method="post">
 			<!-- <input type="text" name="first_user" placeholder="First User">
 			<input type="text" name="second_user" placeholder="Second User">
 			<input type="submit" name="submit" value="Submit"> -->
 			<div class="form-group">
-				<input type="text" class="form-control" name="first_user" placeholder="First player's name">
+				<input type="text" class="form-control" name="match_title" placeholder="Match title" required>
 			</div>
 			<div class="form-group">
-				<input type="text" class="form-control" name="second_user" placeholder="Second player's name">
+				<input type="text" class="form-control" name="first_user" placeholder="First player's name" required>
 			</div>
+			<div class="form-group">
+				<input type="text" class="form-control" name="second_user" placeholder="Second player's name" required>
+			</div>
+			
 			<div class="form-group">
 				<button type="submit" name="submit" class="btn btn-primary form-control" style="
 				display: block;">Submit</button>
@@ -61,19 +62,21 @@ require_once 'config.php';
 		<hr>
 		<h2>Summary</h2>
 		<?php
-	} else {
-		$first_user = $_POST['first_user'];
-		$second_user = $_POST['second_user'];
-		$public_id = SHA1($first_user . $second_user . time());
+		if (isset($_POST['first_user']) && isset($_POST['second_user']) && isset($_POST['match_title'])) {
+			echo "andar";
+			$first_user = $_POST['first_user'];
+			$second_user = $_POST['second_user'];
+			$match_title = $_POST['match_title'];
+			$public_id = SHA1($first_user . $second_user . time());
 
-		if (validate($first_user, $second_user)) {
-			$first_user_count = getCount($first_user);
-			$second_user_count = getCount($second_user);
+			if (validate($first_user, $second_user)) {
+				$first_user_count = getCount($first_user);
+				$second_user_count = getCount($second_user);
 
 				// setup db connection
 
-			try {
-				$mysqli = new mysqli($host, $user, $password, $dbname);
+				try {
+					$mysqli = new mysqli($host, $user, $password, $dbname);
 
 					// check if the row exists in db
 					// $query = "SELECT * FROM matches WHERE date=CURDATE() AND first_user='" . $first_user . "' AND second_user='" . $second_user . "'";
@@ -83,110 +86,116 @@ require_once 'config.php';
 					// // if row doesn't exist, insert new row
 					// if ($result->num_rows < 1) {
 						// set other rows to be inactive
-				$inactiveQuery = "UPDATE `matches` SET `active`=0 WHERE `active`=1";
-				$res = $mysqli->query($inactiveQuery);
-				if (!$res) {
-					echo "mysqli error: " . $mysqli->error . "\n";
-				}
+					$inactiveQuery = "UPDATE `matches` SET `active`=0 WHERE `active`=1";
+					$res = $mysqli->query($inactiveQuery);
+					if (!$res) {
+						echo "mysqli error: " . $mysqli->error . "\n";
+					}
 
 					// insert new row
-				$users_voted = array();
-				$serialized = serialize($users_voted);
-				$query = "INSERT INTO `matches`(`date`, `first_user`, `second_user`, `first_user_count`, `second_user_count`, `created_at`, `from_date`, `to_date`, `public_id`, `active`, `users_voted`) VALUES (CURDATE(),'$first_user', '$second_user', $first_user_count, $second_user_count, UTC_TIMESTAMP() + 0, CURDATE(), CURDATE() + 1, '$public_id', 1, '$serialized')";
+					$users_voted = array();
+					$serialized = serialize($users_voted);
+					$query = "INSERT INTO `matches`(`date`, `match_title`, `first_user`, `second_user`, `first_user_count`, `second_user_count`, `created_at`, `from_date`, `to_date`, `public_id`, `active`, `users_voted`) VALUES (CURDATE(), '$match_title', '$first_user', '$second_user', $first_user_count, $second_user_count, UTC_TIMESTAMP() + 0, CURDATE(), CURDATE() + 1, '$public_id', 1, '$serialized')";
 
-				$mysqli->query($query);
+					$mysqli->query($query);
 					// }
-			} catch (Exception $e) {
-				echo "mysqli exception: ", $e->getMessage(), "\n";
-			}
+				} catch (Exception $e) {
+					echo "mysqli exception: ", $e->getMessage(), "\n";
+				}
 
-		} else {
+			} else {
 				// display error
+			}
+			unset($_POST['first_user']);
+			unset($_POST['second_user']);
+			unset($_POST['match_title']);
 		}
-	}
 
 		// display existing matches
 
-	try {
-		$mysqli = new mysqli($host, $user, $password, $dbname);
+		try {
+			$mysqli = new mysqli($host, $user, $password, $dbname);
 
-		$query = "SELECT * FROM matches ORDER BY active DESC";
+			$query = "SELECT * FROM matches ORDER BY active DESC";
 
-		$result = $mysqli->query($query);
+			$result = $mysqli->query($query);
 
-		$num_of_rows = $result->num_rows;
+			$num_of_rows = $result->num_rows;
 
-		?>
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th>#</th>
-					<th>First Player</th>
-					<th>Second Player</th>
-					<th>Match Status</th>
-					<th>Results</th>
-				</tr>
-			</thead>
+			?>
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Match Title</th>
+						<th>First Player</th>
+						<th>Second Player</th>
+						<th>Match Status</th>
+						<th>Results</th>
+					</tr>
+				</thead>
+				<?php
+
+				for ($i = 0; $i < $num_of_rows; $i++) {
+					$row = $result->fetch_object();
+
+					if ($row->active == 0) {
+					// echo "$row->first_user vs $row->second_user <span style=\"color: red\">inactive </span><a href='display.php?id=$row->public_id'>view</a><br>";
+						?>
+						<tbody>
+							<tr>
+								<th scope="row"><?php echo $i?></th>
+								<td><?php echo $row->match_title?></td>
+								<td><?php echo $row->first_user?></td>
+								<td><?php echo $row->second_user?></td>
+								<td style="color: red;">Inactive</td>
+								<td>
+									<?php echo "<a href='display.php?id=$row->public_id'>"?>
+									<button class="btn btn-primary" style="display: block;font-size: 14px;">View Results</button>
+									<?php echo "</a>"?>
+								</td>
+							</tr>
+						</tbody>
+						<?php
+					} else {
+					// echo "$row->first_user vs $row->second_user <span style=\"color: blue\">active </span><a href=\"display.php?id=$row->public_id\"> view</a><br>";
+						?>
+						<tbody>
+							<tr>
+								<th scope="row"><?php echo $i?></th>
+								<td><?php echo $row->match_title?></td>
+								<td><?php echo $row->first_user?></td>
+								<td><?php echo $row->second_user?></td>
+								<td style="color: green;">Active</td>
+								<td>
+									<?php echo "<a href='display.php?id=$row->public_id'>"?>
+									<button class="btn btn-primary" style="display: block;font-size: 14px;">View Results</button>
+									<?php echo "</a>"?>
+								</td>
+							</tr>
+						</tbody>
+						<?php
+					}
+				}
+				?>
+			</table>
 			<?php
 
-			for ($i = 0; $i < $num_of_rows; $i++) {
-				$row = $result->fetch_object();
-
-				if ($row->active == 0) {
-					// echo "$row->first_user vs $row->second_user <span style=\"color: red\">inactive </span><a href='display.php?id=$row->public_id'>view</a><br>";
-					?>
-					<tbody>
-						<tr>
-							<th scope="row"><?php echo $i?></th>
-							<td><?php echo $row->first_user?></td>
-							<td><?php echo $row->second_user?></td>
-							<td style="color: red;">Inactive</td>
-							<td>
-								<?php echo "<a href='display.php?id=$row->public_id'>"?>
-									<button class="btn btn-primary" style="display: block;font-size: 14px;">View Results</button>
-								<?php echo "</a>"?>
-							</td>
-						</tr>
-					</tbody>
-					<?php
-				} else {
-					// echo "$row->first_user vs $row->second_user <span style=\"color: blue\">active </span><a href=\"display.php?id=$row->public_id\"> view</a><br>";
-					?>
-					<tbody>
-						<tr>
-							<th scope="row"><?php echo $i?></th>
-							<td><?php echo $row->first_user?></td>
-							<td><?php echo $row->second_user?></td>
-							<td style="color: green;">Active</td>
-							<td>
-								<?php echo "<a href='display.php?id=$row->public_id'>"?>
-									<button class="btn btn-primary" style="display: block;font-size: 14px;">View Results</button>
-								<?php echo "</a>"?>
-							</td>
-						</tr>
-					</tbody>
-					<?php
-				}
-			}
-			?>
-		</table>
-		<?php
-
-		$mysqli->close();
-	} catch (Exception $e) {
-		echo "mysqli exception: ", $e->getMessage(), "\n";
-	}
+			$mysqli->close();
+		} catch (Exception $e) {
+			echo "mysqli exception: ", $e->getMessage(), "\n";
+		}
 
 		// Stub
-	function validate($first_user, $second_user) {
-		return true;
-	}
+		function validate($first_user, $second_user) {
+			return true;
+		}
 
 		// Stub
-	function getCount($user) {
-		return 0;
-	}
-	?>
-</div>
+		function getCount($user) {
+			return 0;
+		}
+		?>
+	</div>
 </body>
 </html>
