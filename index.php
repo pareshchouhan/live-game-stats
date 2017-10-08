@@ -9,6 +9,10 @@ require_once 'config.php';
 	<link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,100,100italic,200,200italic,300,300italic,400italic,500,600,500italic,600italic,700,700italic,800,900,800italic,900italic" rel="stylesheet" type="text/css">
 	<link href="https://fonts.googleapis.com/css?family=PT+Sans+Caption:400,700" rel="stylesheet" type="text/css">
 	<link href="https://fonts.googleapis.com/css?family=Patrick+Hand+SC" rel="stylesheet" type="text/css">
+	<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
 	<style>
 		h1 {
 			text-align: center;
@@ -59,11 +63,11 @@ require_once 'config.php';
 				display: block;">Submit</button>
 			</div>
 		</form>
+		<a target="_blank" id="disable-games" href="disable.php" class="btn btn-danger form-control" style="display: block;">Disable</a>
 		<hr>
 		<h2>Summary</h2>
 		<?php
 		if (isset($_POST['first_user']) && isset($_POST['second_user']) && isset($_POST['match_title'])) {
-			echo "andar";
 			$first_user = $_POST['first_user'];
 			$second_user = $_POST['second_user'];
 			$match_title = $_POST['match_title'];
@@ -109,6 +113,14 @@ require_once 'config.php';
 			unset($_POST['first_user']);
 			unset($_POST['second_user']);
 			unset($_POST['match_title']);
+			?>
+			
+			<script>
+				setTimeout(function() {
+					window.location = window.location;
+				}, 500);
+			</script>
+			<?php
 		}
 
 		// display existing matches
@@ -162,10 +174,10 @@ require_once 'config.php';
 						?>
 						<tbody>
 							<tr>
-								<th scope="row"><?php echo $i?></th>
-								<td><?php echo $row->match_title?></td>
-								<td><?php echo $row->first_user?></td>
-								<td><?php echo $row->second_user?></td>
+								<th scope="row"><?php echo $row->id; ?></th>
+								<td><?php echo $row->match_title; ?></td>
+								<td><?php echo $row->first_user; ?></td>
+								<td><?php echo $row->second_user; ?></td>
 								<td style="color: green;">Active</td>
 								<td>
 									<?php echo "<a href='display.php?id=$row->public_id'>"?>
@@ -198,4 +210,14 @@ require_once 'config.php';
 		?>
 	</div>
 </body>
+
+<script>
+	$(document).ready(function() {
+		$("#disable-games").click(function() {
+			setTimeout(function() {
+				location.reload();
+			}, 500);
+		});
+	});
+</script>
 </html>
